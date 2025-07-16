@@ -1,12 +1,16 @@
+# Unknown = Unknown
+# 1 = Illicit
+# 2 = Licit
 #Code for paper reproduce-ablility
-
+seeded_run = True
 #Detecting system (pc or mac)
 import platform
 pc = platform.system()
 
 import os
 if pc == 'Darwin':
-    os.chdir("/Users/lambertusvanzyl/Desktop/Reproduce-ablility_paper")
+    os.chdir("/Users/lambertusvanzyl/Desktop/Reproduce-ability_paper")
+    #/Users/lambertusvanzyl/Desktop/Reproduce-ability_paper
 else:
     os.chdir("/Users/Lambertus/Desktop/Reproduce-ablility_paper")
     #"C:\Users\Lambertus\Desktop\AIO_GNN"
@@ -32,11 +36,23 @@ from torch_geometric.utils import to_networkx
 from torch_geometric.nn import GCNConv, GATConv, GINConv, global_add_pool
 
 #Importing sklearn libraries
-from sklearn.metrics import precisio, recall_score, f1_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
 from sklearn.preprocessing import LabelEncoder
 import sys
 
 #%% Importing custom libraries
-
+from reading_data import readfiles
+from pre_processing import elliptic_pre_processing, create_data_object
 
 #%% Setting seed
+if seeded_run == True:
+    seed = 42
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    
+#%%Getting data ready for models
+#Reading in data
+features_df, classes_df, edgelist_df = readfiles(pc)
+classes_df, edgelist_df, features_df, known_nodes = elliptic_pre_processing(classes_df, edgelist_df, features_df)
+# Create data object
+data = create_data_object(features_df, edgelist_df, classes_df)
