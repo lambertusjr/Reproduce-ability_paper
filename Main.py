@@ -42,7 +42,7 @@ import sys
 
 #%% Importing custom libraries
 from reading_data import readfiles
-from pre_processing import elliptic_pre_processing, create_data_object
+from pre_processing import elliptic_pre_processing, create_data_object, create_elliptic_masks
 
 #%% Setting seed
 if seeded_run == True:
@@ -56,3 +56,7 @@ features_df, classes_df, edgelist_df = readfiles(pc)
 classes_df, edgelist_df, features_df, known_nodes = elliptic_pre_processing(classes_df, edgelist_df, features_df)
 # Create data object
 data = create_data_object(features_df, edgelist_df, classes_df)
+#Create mask for data
+create_elliptic_masks(features_df, edgelist_df, known_nodes)
+
+#%% Testing if model runs
