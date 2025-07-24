@@ -43,6 +43,8 @@ import sys
 #%% Importing custom libraries
 from reading_data import readfiles
 from pre_processing import elliptic_pre_processing, create_data_object, create_elliptic_masks
+from Models import GCN, GAT, GIN
+from helper_functions import apply_node_mask_and_remap, train_gnn
 
 #%% Setting seed
 if seeded_run == True:
@@ -57,6 +59,32 @@ classes_df, edgelist_df, features_df, known_nodes = elliptic_pre_processing(clas
 # Create data object
 data = create_data_object(features_df, edgelist_df, classes_df)
 #Create mask for data
-create_elliptic_masks(features_df, edgelist_df, known_nodes)
+train_mask, val_mask_backdated, test_mask_backdated, train_perf_eval, val_perf_eval, test_perf_eval = create_elliptic_masks(features_df, edgelist_df, known_nodes)
 
 #%% Testing if model runs
+#Setting device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+model = GCN(num_node_features = data.num_features, num_classes = 2, hidden_units = 64).to(device)
+data = data.to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.05, weight_decay=5e-4)
+criterion = nn.CrossEntropyLoss()
+#Getting data variables for each phase
+train_data = apply_node_mask_and_remap(data, train_mask, features_df)
+val_data = apply_node_mask_and_remap(data, val_mask_backdated, features_df)
+test_data = apply_node_mask_and_remap(data, test_mask_backdated, features_df)
+
+#%%
+#Testing
+temp = data.y.cpu().numpy()[:161603]
+out = temp[val_perf_eval]
+print(f'temp: {temp}\nout: {out}')
+#%%
+train_data = train_data.to(device)
+val_data = val_data.to(device)
+test_data = test_data.to(device)
+#%%
+train_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
+
+
+# %%
