@@ -14,8 +14,8 @@ if pc == 'Darwin':
     os.chdir("/Users/lambertusvanzyl/Desktop/Reproduce-ability_paper")
     #/Users/lambertusvanzyl/Desktop/Reproduce-ability_paper
 else:
-    os.chdir("/Users/Lambertus/Desktop/Reproduce-ablility_paper")
-    #"C:\Users\Lambertus\Desktop\AIO_GNN"
+    os.chdir("/Users/Lambertus/Desktop/Reproduce-ability_paper")
+    #"C:\Users\Lambertus\Desktop\Reproduce-ability_paper"
     
 #%% Importing libraries
 import numpy as np
