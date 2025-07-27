@@ -3,6 +3,8 @@
 # 2 = Licit
 #Code for paper reproduce-ablility
 seeded_run = True
+parameter_tuning = True
+num_epochs = 200
 #Detecting system (pc or mac)
 import platform
 pc = platform.system()
@@ -84,7 +86,24 @@ train_data = train_data.to(device)
 val_data = val_data.to(device)
 test_data = test_data.to(device)
 #%%
-train_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
+#metrics, best_f1_model_wts = train_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
 
 
-# %%
+# %% Optuna
+import optuna
+
+if parameter_tuning == True:
+    from Optuna import run_optuna
+    best_params, best_value = run_optuna(
+        train_data=train_data,
+        val_data=val_data,
+        device=device,
+        num_epochs=num_epochs,
+        train_mask=train_mask,
+        train_perf_eval=train_perf_eval,
+        val_perf_eval=val_perf_eval,
+        n_trials=100)
+    print(f"Best parameters: {best_params}")
+    print(f"Best value: {best_value}")
+    
+#Data variable on line 96 is the problem

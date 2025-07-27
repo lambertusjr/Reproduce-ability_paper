@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
 import numpy as np
-
+from copy import deepcopy
 import sklearn.metrics
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
 
@@ -51,6 +51,8 @@ def train_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_p
     """
     
     """
+    best_f1 = 0.0
+    best_f1_model_wts = None
     # Creating dictionaries to store metrics
     metrics = {
         'train': {
@@ -110,6 +112,11 @@ def train_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_p
             metrics['val']['rec'].append(val_rec)
             metrics['val']['f1'].append(val_f1)
             metrics['val']['auc'].append(val_auc)
+            
+            #Save the best model based on F1 score
+            if val_f1 > best_f1:
+                best_f1 = val_f1
+                best_f1_model_wts = deepcopy(model.state_dict())
 
         if epoch % 10 == 0:
             print(f"Epoch {epoch}/{num_epochs}")
@@ -120,4 +127,19 @@ def train_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_p
             })
             #print(df.to_string())
 
-    return metrics
+    return metrics, best_f1_model_wts
+
+def evaluate(model, val_data, val_perf_eval):
+    model.eval()
+    with torch.no_grad():
+        out = model(val_data)
+        y_val_pred = out[val_perf_eval].argmax(dim=1)
+        y_val_true = val_data.y[val_perf_eval]
+        
+        val_acc = (y_val_pred == y_val_true).sum().item() / len(y_val_true)
+        val_prec = precision_score(y_val_true.cpu(), y_val_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+        val_rec = recall_score(y_val_true.cpu(), y_val_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+        val_f1 = f1_score(y_val_true.cpu(), y_val_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+        val_auc = sklearn.metrics.roc_auc_score(y_val_true.cpu(), out[val_perf_eval][:, 1].cpu())
+        
+        return val_acc, val_prec, val_rec, val_f1, val_auc
