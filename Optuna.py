@@ -4,7 +4,7 @@ import torch
 from functools import partial
 
 from helper_functions import train_gnn, evaluate
-from Models import GCN
+from Models import GCN, GAT, GIN
 
 def objective(trial, train_data, device, num_epochs, train_mask, train_perf_eval, val_data, val_perf_eval):
     #Setting hyperparameters for optuna runs
@@ -17,7 +17,7 @@ def objective(trial, train_data, device, num_epochs, train_mask, train_perf_eval
     gamma = trial.suggest_float("gamma", 2.0, 5.0)
     dropout = trial.suggest_float("dropout", 0.1, 0.5)
     
-    model = GCN(num_node_features=train_data.num_features, num_classes=2, hidden_units=hidden_units).to(device)
+    model = GAT(num_node_features=train_data.num_features, num_classes=2, hidden_units=hidden_units, num_heads=num_heads).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = torch.nn.CrossEntropyLoss()
     train_data = train_data.to(device)

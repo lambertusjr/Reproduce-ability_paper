@@ -106,4 +106,24 @@ if parameter_tuning == True:
     print(f"Best parameters: {best_params}")
     print(f"Best value: {best_value}")
     
-#Data variable on line 96 is the problem
+#%% Testing model
+testing = True
+if testing == True:
+    # Set model and optimizer parameters from Optuna best_params
+    hidden_units = best_params.get('hidden_units', 64)
+    lr = best_params.get('learning_rate', 0.05)
+    weight_decay = best_params.get('weight_decay', 5e-4)
+    #num_heads = best_params.get('num_heads', 1)
+
+    # Re-initialize model and optimizer with best parameters
+    model = GCN(num_node_features=data.num_features, num_classes=2, hidden_units=hidden_units).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    print("Extracted Optuna parameters:")
+    for param, value in best_params.items():
+        print(f"{param}: {value}")
+    print(f"Best Optuna objective value: {best_value}")
+
+    # Now you can run validation/testing using the model with best parameters
+    # metrics, best_f1_model_wts = train_gnn(...)
+    
