@@ -46,7 +46,7 @@ import sys
 from reading_data import readfiles
 from pre_processing import elliptic_pre_processing, create_data_object, create_elliptic_masks
 from Models import GCN, GAT, GIN
-from helper_functions import apply_node_mask_and_remap, train_and_val_gnn, evaluate
+from helper_functions import apply_node_mask_and_remap, train_and_val_gnn, evaluate, testing_GNN
 
 #%% Setting seed
 if seeded_run == True:
@@ -91,20 +91,20 @@ test_data = test_data.to(device)
 
 # %% Optuna
 import optuna
-
+from Optuna import run_optuna
 if parameter_tuning == True:
-    from Optuna import run_optuna
-    best_params, best_value = run_optuna(
-        train_data=train_data,
-        val_data=val_data,
-        device=device,
-        num_epochs=num_epochs,
-        train_mask=train_mask,
-        train_perf_eval=train_perf_eval,
-        val_perf_eval=val_perf_eval,
-        n_trials=100)
-    print(f"Best parameters: {best_params}")
-    print(f"Best value: {best_value}")
+    for l in range(5):
+        best_params, best_value = run_optuna(
+                train_data=train_data,
+                val_data=val_data,
+                device=device,
+                num_epochs=num_epochs,
+                train_mask=train_mask,
+                train_perf_eval=train_perf_eval,
+                val_perf_eval=val_perf_eval,
+                n_trials=100)
+        print(f"Best parameters: {best_params}")
+        print(f"Best value: {best_value}") 
     
 #%% Testing model
 testing = True
@@ -131,7 +131,19 @@ if testing == True:
     test_data = test_data.to(device)
     
     # Train model with best parameters
-    
+    avg_results = testing_GNN(
+        num_epochs=num_epochs,
+        data=train_data,
+        model=model,
+        optimizer=optimizer,
+        criterion=criterion,
+        train_mask=train_mask,
+        train_perf_eval=train_perf_eval,
+        val_data=val_data,
+        val_perf_eval=val_perf_eval,
+        test_data=test_data,
+        test_perf_eval=test_perf_eval
+    )
     #print("Extracted Optuna parameters:")
     #for param, value in best_params.items():
     #    print(f"{param}: {value}")

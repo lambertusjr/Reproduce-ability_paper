@@ -51,7 +51,7 @@ def create_elliptic_masks(features_df, edgelist_df, known_nodes):
     
     
     #Creating test performance evaluation mask
-    test_begin_empty = np.zeros(val_mask_backdated.sum(),dtype=bool)
+    test_begin_empty = np.zeros(val_mask_backdated.sum()+1,dtype=bool)
     known_nodes_test_only = known_nodes[(val_mask_backdated.sum() +1):]
     test_perf_eval = np.concatenate((test_begin_empty, known_nodes_test_only))
     
