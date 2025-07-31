@@ -47,6 +47,7 @@ from reading_data import readfiles
 from pre_processing import elliptic_pre_processing, create_data_object, create_elliptic_masks
 from Models import GCN, GAT, GIN
 from helper_functions import apply_node_mask_and_remap, train_and_val_gnn, evaluate, testing_GNN
+from debugging import compare_1d_tensors
 
 #%% Setting seed
 if seeded_run == True:
@@ -86,7 +87,7 @@ train_data = train_data.to(device)
 val_data = val_data.to(device)
 test_data = test_data.to(device)
 #%%
-#metrics, best_f1_model_wts = train_and_val_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
+metrics, best_f1_model_wts = train_and_val_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
 
 
 # %% Optuna

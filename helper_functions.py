@@ -9,6 +9,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, confusion_m
 
 import torch_geometric
 from torch_geometric.data import Data
+from debugging import compare_1d_tensors
 
 def apply_node_mask_and_remap(data: Data, node_mask: torch.Tensor, e_txs_feat) -> Data:
     # Convert node features to NumPy array (excluding 'txId')
@@ -166,6 +167,8 @@ def testing_GNN(num_epochs, data, model, optimizer, criterion, train_mask, train
             test_out = model(test_data)
             y_test_pred = test_out[test_perf_eval].argmax(dim=1)
             y_test_true = test_data.y[test_perf_eval]
+            
+            #compare_1d_tensors(y_test_pred, y_test_true, precision=4)
             
             test_acc = (y_test_pred == y_test_true).sum().item() / len(y_test_true)
             test_prec = precision_score(y_test_true.cpu(), y_test_pred.cpu(), pos_label=0, average='binary', zero_division=0)
