@@ -3,7 +3,7 @@
 # 2 = Licit
 #Code for paper reproduce-ablility
 seeded_run = True
-parameter_tuning = True
+parameter_tuning = False
 num_epochs = 200
 #Detecting system (pc or mac)
 import platform
@@ -46,7 +46,7 @@ import sys
 from reading_data import readfiles
 from pre_processing import elliptic_pre_processing, create_data_object, create_elliptic_masks
 from Models import GCN, GAT, GIN
-from helper_functions import apply_node_mask_and_remap, train_gnn
+from helper_functions import apply_node_mask_and_remap, train_and_val_gnn, evaluate
 
 #%% Setting seed
 if seeded_run == True:
@@ -86,7 +86,7 @@ train_data = train_data.to(device)
 val_data = val_data.to(device)
 test_data = test_data.to(device)
 #%%
-#metrics, best_f1_model_wts = train_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
+#metrics, best_f1_model_wts = train_and_val_gnn(num_epochs=200, data=train_data, model=model, optimizer=optimizer, criterion=criterion, train_mask=train_mask, train_perf_eval=train_perf_eval, val_data=val_data, val_perf_eval=val_perf_eval)
 
 
 # %% Optuna
@@ -110,19 +110,32 @@ if parameter_tuning == True:
 testing = True
 if testing == True:
     # Set model and optimizer parameters from Optuna best_params
-    hidden_units = best_params.get('hidden_units', 64)
-    lr = best_params.get('learning_rate', 0.05)
-    weight_decay = best_params.get('weight_decay', 5e-4)
-    #num_heads = best_params.get('num_heads', 1)
+    if parameter_tuning == True:
+        hidden_units = best_params['hidden_units']
+        lr = best_params['learning_rate']
+        weight_decay = best_params['weight_decay']
+    # Setting manual parameters because optuna was not run
+    hidden_units = 64
+    lr = 0.05296
+    weight_decay = 0.0006348229624028726
 
+    
     # Re-initialize model and optimizer with best parameters
     model = GCN(num_node_features=data.num_features, num_classes=2, hidden_units=hidden_units).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-
-    print("Extracted Optuna parameters:")
-    for param, value in best_params.items():
-        print(f"{param}: {value}")
-    print(f"Best Optuna objective value: {best_value}")
+    criterion = nn.CrossEntropyLoss()
+    val_data = val_data.to(device)
+    
+    #Create training set that contains validation mask as well to increase available data
+    test_data = apply_node_mask_and_remap(data, test_mask_backdated, features_df)
+    test_data = test_data.to(device)
+    
+    # Train model with best parameters
+    
+    #print("Extracted Optuna parameters:")
+    #for param, value in best_params.items():
+    #    print(f"{param}: {value}")
+    #print(f"Best Optuna objective value: {best_value}")
 
     # Now you can run validation/testing using the model with best parameters
     # metrics, best_f1_model_wts = train_gnn(...)

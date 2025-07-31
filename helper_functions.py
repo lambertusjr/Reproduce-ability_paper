@@ -47,7 +47,7 @@ def apply_node_mask_and_remap(data: Data, node_mask: torch.Tensor, e_txs_feat) -
     new_data = Data(x=x_tensor, edge_index=edge_index_tensor, edge_attr=edge_attr_tensor, y=y_tensor)
     return new_data
 
-def train_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval):
+def train_and_val_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval):
     """
     
     """
@@ -143,3 +143,40 @@ def evaluate(model, val_data, val_perf_eval):
         val_auc = sklearn.metrics.roc_auc_score(y_val_true.cpu(), out[val_perf_eval][:, 1].cpu())
         
         return val_acc, val_prec, val_rec, val_f1, val_auc
+
+from Models import GCN, GAT, GIN
+def testing_GNN(num_epochs, data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval, test_data, test_perf_eval):
+    #This function is used to validate performance results
+    avg_results = {'acc': [], 'prec': [], 'rec': [], 'f1': [], 'auc': []}
+    for i in range(30):
+        #Training and validation
+        metrics, best_f1_model_wts = train_and_val_gnn(num_epochs, data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval)
+        #Getting results from validation
+        avg_results['acc'].append(metrics['val']['acc'][-1])
+        avg_results['prec'].append(metrics['val']['prec'][-1])
+        avg_results['rec'].append(metrics['val']['rec'][-1])
+        avg_results['f1'].append(metrics['val']['f1'][-1])
+        avg_results['auc'].append(metrics['val']['auc'][-1])
+        
+        # Load the best model weights
+        model.load_state_dict(best_f1_model_wts)
+        # Evaluate on the test set
+        model.eval()
+        with torch.no_grad():
+            test_out = model(test_data)
+            y_test_pred = test_out[test_perf_eval].argmax(dim=1)
+            y_test_true = test_data.y[test_perf_eval]
+            
+            test_acc = (y_test_pred == y_test_true).sum().item() / len(y_test_true)
+            test_prec = precision_score(y_test_true.cpu(), y_test_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+            test_rec = recall_score(y_test_true.cpu(), y_test_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+            test_f1 = f1_score(y_test_true.cpu(), y_test_pred.cpu(), pos_label=0, average='binary', zero_division=0)
+            test_auc = sklearn.metrics.roc_auc_score(y_test_true.cpu(), test_out[test_perf_eval][:, 1].cpu())
+            
+            print(f"Test Results - Accuracy: {test_acc}, Precision: {test_prec}, Recall: {test_rec}, F1-Score: {test_f1}, AUC: {test_auc}")
+    return avg_results
+    #Beginning training
+    
+    
+    
+

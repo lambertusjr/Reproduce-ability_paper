@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from functools import partial
 
-from helper_functions import train_gnn, evaluate
+from helper_functions import train_and_val_gnn, evaluate
 from Models import GCN, GAT, GIN
 
 def objective(trial, train_data, device, num_epochs, train_mask, train_perf_eval, val_data, val_perf_eval):
@@ -13,9 +13,9 @@ def objective(trial, train_data, device, num_epochs, train_mask, train_perf_eval
     learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-1, log=True)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
     
-    alpha = trial.suggest_float("alpha", 0.2, 0.7)
-    gamma = trial.suggest_float("gamma", 2.0, 5.0)
-    dropout = trial.suggest_float("dropout", 0.1, 0.5)
+    #alpha = trial.suggest_float("alpha", 0.2, 0.7)
+    #gamma = trial.suggest_float("gamma", 2.0, 5.0)
+    #dropout = trial.suggest_float("dropout", 0.1, 0.5)
     
     model = GAT(num_node_features=train_data.num_features, num_classes=2, hidden_units=hidden_units, num_heads=num_heads).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -24,7 +24,7 @@ def objective(trial, train_data, device, num_epochs, train_mask, train_perf_eval
     model = model.to(device)
     print(f"\n=== Trial {trial.number} ===")
     
-    metrics, best_f1_model_wts = train_gnn(num_epochs, train_data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval)
+    metrics, best_f1_model_wts = train_and_val_gnn(num_epochs, train_data, model, optimizer, criterion, train_mask, train_perf_eval, val_data, val_perf_eval)
     
     model.load_state_dict(best_f1_model_wts)
     
